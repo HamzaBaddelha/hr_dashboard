@@ -52,20 +52,20 @@ def _to_dashboard_schema(df: pd.DataFrame) -> pd.DataFrame:
     output = df.copy()
     output = standardize_job_titles(output, source_col="job_title")
 
-    output["employee_id"] = output.get("employee_id", pd.Series([pd.NA] * len(output), index=output.index))
-    output["employee_name"] = output["name"].fillna("غير محدد")
+    output["employee_id"] = _series_or_default(output, "employee_id", pd.NA)
+    output["employee_name"] = _series_or_default(output, "name", "غير محدد").fillna("غير محدد")
     output["department"] = output["الإدارة"].fillna("أخرى")
-    output["job_family"] = output["المسمى_المصحح"].fillna(output["job_title"]).fillna("غير محدد")
-    output["city"] = output["city"].fillna("الرياض")
-    output["gender"] = output["gender"].map(_normalize_gender).fillna("غير محدد")
-    output["salary"] = pd.to_numeric(output["salary"], errors="coerce").fillna(0.0)
-    output["insurance_cost"] = pd.to_numeric(output["insurance_amount"], errors="coerce").fillna(0.0)
-    output["iqama_days_remaining"] = pd.to_numeric(output["iqama_days_left"], errors="coerce")
-    output["contract_days_remaining"] = pd.to_numeric(output["contract_days_left"], errors="coerce")
+    output["job_family"] = output["المسمى_المصحح"].fillna(_series_or_default(output, "job_title", "غير محدد")).fillna("غير محدد")
+    output["city"] = _series_or_default(output, "city", "الرياض").fillna("الرياض")
+    output["gender"] = _series_or_default(output, "gender", "غير محدد").map(_normalize_gender).fillna("غير محدد")
+    output["salary"] = pd.to_numeric(_series_or_default(output, "salary", 0.0), errors="coerce").fillna(0.0)
+    output["insurance_cost"] = pd.to_numeric(_series_or_default(output, "insurance_amount", 0.0), errors="coerce").fillna(0.0)
+    output["iqama_days_remaining"] = pd.to_numeric(_series_or_default(output, "iqama_days_left", pd.NA), errors="coerce")
+    output["contract_days_remaining"] = pd.to_numeric(_series_or_default(output, "contract_days_left", pd.NA), errors="coerce")
     output["performance_score"] = 3.0
 
-    birth_date = pd.to_datetime(output["birth_date"], errors="coerce")
-    join_date = pd.to_datetime(output["join_date"], errors="coerce")
+    birth_date = pd.to_datetime(_series_or_default(output, "birth_date", pd.NaT), errors="coerce")
+    join_date = pd.to_datetime(_series_or_default(output, "join_date", pd.NaT), errors="coerce")
     today = pd.Timestamp.now().normalize()
     output["age"] = ((today - birth_date).dt.days / 365.25).round().fillna(0).astype(int)
     output["tenure_years"] = ((today - join_date).dt.days / 365.25).round(1).fillna(0.0)
@@ -77,10 +77,11 @@ def _to_dashboard_schema(df: pd.DataFrame) -> pd.DataFrame:
     )
     output["insurance_level"] = output["insurance_level"].astype("string").fillna("C")
 
-    output["iqama_expiry_date"] = pd.to_datetime(output["iqama_expiry_date"], errors="coerce")
-    output["contract_end_date"] = pd.to_datetime(output["contract_end_date"], errors="coerce")
+    output["iqama_expiry_date"] = pd.to_datetime(_series_or_default(output, "iqama_expiry_date", pd.NaT), errors="coerce")
+    output["contract_end_date"] = pd.to_datetime(_series_or_default(output, "contract_end_date", pd.NaT), errors="coerce")
 
     # Recompute Saudi flag with robust nationality parsing and fallback to ID prefix.
+    output["nationality"] = _series_or_default(output, "nationality", "غير محدد")
     output["is_saudi"] = infer_is_saudi_flags(output["nationality"], output["employee_id"])
     output = enforce_employee_id_business_rules(output, nationality_col="nationality", employee_id_col="employee_id")
 
@@ -128,3 +129,7 @@ def _normalize_gender(value) -> str | None:
     if text in {"male", "m", "ذكر", "male.", "man"}:
         return "Male"
     return str(value).strip()
+
+
+def _series_or_default(df: pd.DataFrame, col: str, default_value):
+    return df.get(col, pd.Series([default_value] * len(df), index=df.index))

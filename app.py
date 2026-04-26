@@ -1,5 +1,6 @@
 import streamlit as st
 from datetime import datetime
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from src.config.settings import APP_ICON, APP_NAME, COMPANY_LOGO_PATH, COMPANY_NAME
@@ -12,9 +13,18 @@ from src.ui.theme import inject_global_styles
 from src.utils.i18n import t
 
 
+def _resolve_page_icon():
+    icon_value = APP_ICON
+    if isinstance(icon_value, str):
+        maybe_file = Path(icon_value)
+        if maybe_file.suffix and not maybe_file.exists():
+            return "🚘"
+    return icon_value or "🚘"
+
+
 st.set_page_config(
     page_title=APP_NAME,
-    page_icon=APP_ICON,
+    page_icon=_resolve_page_icon(),
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -126,7 +136,10 @@ def _render_company_logo(*, width: int = 260, in_sidebar: bool = False) -> None:
 
 
 def _get_saudi_datetime_text() -> str:
-    now = datetime.now(ZoneInfo("Asia/Riyadh"))
+    try:
+        now = datetime.now(ZoneInfo("Asia/Riyadh"))
+    except Exception:
+        now = datetime.utcnow()
     return f"Saudi Arabia Time: {now.strftime('%Y-%m-%d %I:%M %p')}"
 
 
@@ -143,51 +156,55 @@ def _render_saudi_datetime() -> None:
 
 
 def main() -> None:
-    initialize_database()
-    ensure_default_admin()
-    initialize_session_state()
+    try:
+        initialize_database()
+        ensure_default_admin()
+        initialize_session_state()
 
-    language = st.sidebar.selectbox(
-        t(st.session_state["language"], "language"),
-        ["Arabic", "English"],
-        index=0 if st.session_state["language"] == "Arabic" else 1,
-    )
-    st.session_state["language"] = language
+        language = st.sidebar.selectbox(
+            t(st.session_state["language"], "language"),
+            ["Arabic", "English"],
+            index=0 if st.session_state["language"] == "Arabic" else 1,
+        )
+        st.session_state["language"] = language
 
-    inject_global_styles(language)
+        inject_global_styles(language)
 
-    if not st.session_state["authenticated"]:
-        render_auth_screen(language)
-        return
+        if not st.session_state["authenticated"]:
+            render_auth_screen(language)
+            return
 
-    current_user = st.session_state.get("current_user")
-    if not current_user:
-        logout()
-        st.rerun()
-        return
+        current_user = st.session_state.get("current_user")
+        if not current_user:
+            logout()
+            st.rerun()
+            return
 
-    fresh_user = get_user_by_id(int(current_user["id"]))
-    if not fresh_user:
-        logout()
-        st.warning("Your account was not found. Please login again.")
-        st.rerun()
-        return
+        fresh_user = get_user_by_id(int(current_user["id"]))
+        if not fresh_user:
+            logout()
+            st.warning("Your account was not found. Please login again.")
+            st.rerun()
+            return
 
-    if not bool(fresh_user["is_active"]):
-        logout()
-        st.warning("Your account is disabled. Please contact admin.")
-        st.rerun()
-        return
+        if not bool(fresh_user["is_active"]):
+            logout()
+            st.warning("Your account is disabled. Please contact admin.")
+            st.rerun()
+            return
 
-    if fresh_user["role"] != "admin" and not bool(fresh_user["is_approved"]):
-        logout()
-        st.warning("Your account is pending admin approval.")
-        st.rerun()
-        return
+        if fresh_user["role"] != "admin" and not bool(fresh_user["is_approved"]):
+            logout()
+            st.warning("Your account is pending admin approval.")
+            st.rerun()
+            return
 
-    st.session_state["current_user"] = fresh_user
+        st.session_state["current_user"] = fresh_user
 
-    render_app(language)
+        render_app(language)
+    except Exception as exc:
+        st.error(f"Startup error: {exc}")
+        st.exception(exc)
 
 
 if __name__ == "__main__":
