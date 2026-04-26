@@ -5,12 +5,6 @@ from difflib import SequenceMatcher
 
 import pandas as pd
 
-try:
-    from rapidfuzz import fuzz, process
-except Exception:  # pragma: no cover - fallback for environments without rapidfuzz
-    fuzz = None
-    process = None
-
 
 SAUDI_VALUES = {"saudi", "saudi arabia", "سعودي", "سعودية", "سعوديه", "سعودى", "السعودي", "السعودية"}
 SAUDI_ID_PREFIXES = ("1", "10", "11")
@@ -311,9 +305,6 @@ def _resolve_job_title_match(cleaned_title: str) -> tuple[str, str, str, float |
 def _extract_best_match(query: str, candidates: list[str]) -> tuple[str, float, int] | None:
     if not candidates:
         return None
-    if process is not None and fuzz is not None:
-        return process.extractOne(query, candidates, scorer=fuzz.ratio)
-
     best_idx = -1
     best_score = -1.0
     best_value = ""

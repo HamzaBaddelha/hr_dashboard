@@ -1,9 +1,6 @@
 __pycache__/
-*.py[cod]
-*.pyo
-.pytest_cache/
-.mypy_cache/
-
-# Local runtime artifacts
+*.pyc
 data/app.db
-*.log
+.env
+.venv/
+venv/
