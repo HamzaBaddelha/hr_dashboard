@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 from typing import Any
+from difflib import SequenceMatcher
 
 import pandas as pd
-from rapidfuzz import fuzz, process
+
+try:
+    from rapidfuzz import fuzz, process
+except Exception:  # pragma: no cover - fallback for environments without rapidfuzz
+    fuzz = None
+    process = None
 
 
 SAUDI_VALUES = {"saudi", "saudi arabia", "سعودي", "سعودية", "سعوديه", "سعودى", "السعودي", "السعودية"}
@@ -290,7 +296,7 @@ def _resolve_job_title_match(cleaned_title: str) -> tuple[str, str, str, float |
 
     # fuzzy correction
     normalized_candidates = [clean_job_title(title) for title in JOB_TITLE_TO_DEPARTMENT.keys()]
-    best = process.extractOne(cleaned_title, normalized_candidates, scorer=fuzz.ratio)
+    best = _extract_best_match(cleaned_title, normalized_candidates)
     if best:
         matched_normalized, score, _ = best
         if score >= FUZZY_MATCH_THRESHOLD:
@@ -300,3 +306,24 @@ def _resolve_job_title_match(cleaned_title: str) -> tuple[str, str, str, float |
         return cleaned_title, "أخرى", "غير معروف", float(score)
 
     return cleaned_title, "أخرى", "غير معروف", None
+
+
+def _extract_best_match(query: str, candidates: list[str]) -> tuple[str, float, int] | None:
+    if not candidates:
+        return None
+    if process is not None and fuzz is not None:
+        return process.extractOne(query, candidates, scorer=fuzz.ratio)
+
+    best_idx = -1
+    best_score = -1.0
+    best_value = ""
+    for idx, candidate in enumerate(candidates):
+        score = SequenceMatcher(None, query, candidate).ratio() * 100
+        if score > best_score:
+            best_score = score
+            best_idx = idx
+            best_value = candidate
+
+    if best_idx < 0:
+        return None
+    return best_value, float(best_score), best_idx
