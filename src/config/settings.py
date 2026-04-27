@@ -1,15 +1,16 @@
 from pathlib import Path
 import os
+import tempfile
 
 
 APP_NAME = "Luxury Vehicle HR Analytics"
 COMPANY_NAME = "Luxury Vehicle"
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-DATA_DIR = BASE_DIR / "data"
+DATA_DIR = Path(tempfile.gettempdir()) / "lv_hr_dashboard"
 DB_PATH = DATA_DIR / "app.db"
 APP_ICON = str(BASE_DIR / "src" / "public" / "assets" / "hiring.png")
-COMPANY_LOGO_PATH = BASE_DIR / "src" / "public" / "assets" / "Untitled design (3).png"
+COMPANY_LOGO_PATH = BASE_DIR / "src" / "public" / "assets" / "company_logo.png"
 
 MIN_PASSWORD_LENGTH = 8
 VALID_ROLES = {"admin", "hr_user", "viewer"}
