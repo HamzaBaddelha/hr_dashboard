@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 from src.config.settings import APP_ICON, APP_NAME, COMPANY_LOGO_PATH, COMPANY_NAME
 from src.core.database import initialize_database
 from src.core.session import initialize_session_state, logout
-from src.pages import admin_user_management, contracts, executive_dashboard, iqama_monitoring, overview, salaries_insurance, saudization, workforce_insights
+from src.pages import contracts, executive_dashboard, iqama_monitoring, overview, salaries_insurance, saudization, workforce_insights
 from src.services.auth_service import authenticate_user, ensure_default_admin, get_user_by_id, register_user
 from src.services.data_pipeline_service import get_dashboard_dataset
 from src.ui.theme import inject_global_styles
@@ -90,8 +90,7 @@ def render_app(language: str) -> None:
         "Salaries & Insurance": (t(language, "salary_insurance"), salaries_insurance.render),
         "Workforce Insights": (t(language, "workforce_insights"), workforce_insights.render),
     }
-    if is_admin:
-        page_map["User Management"] = ("User Management", admin_user_management.render)
+    pass
 
     _render_company_logo(width=320)
     _render_saudi_datetime()
