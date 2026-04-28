@@ -32,7 +32,6 @@ python -m streamlit run app.py
   - `streamlit==1.45.1`
   - `pandas==2.2.3`
   - `plotly==5.24.1`
-  - `bcrypt==4.2.1`
   - `openpyxl==3.1.5`
 
 ## Project Structure
