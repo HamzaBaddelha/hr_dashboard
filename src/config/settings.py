@@ -15,6 +15,6 @@ COMPANY_LOGO_PATH = BASE_DIR / "src" / "public" / "assets" / "company_logo.png"
 MIN_PASSWORD_LENGTH = 8
 VALID_ROLES = {"admin", "hr_user", "viewer"}
 
-DEFAULT_ADMIN_USERNAME = os.getenv("LV_ADMIN_USERNAME", "admin")
-DEFAULT_ADMIN_PASSWORD = os.getenv("LV_ADMIN_PASSWORD", "changeme123!")
+DEFAULT_ADMIN_USERNAME = os.getenv("LV_ADMIN_USERNAME", "fahed")
+DEFAULT_ADMIN_PASSWORD = os.getenv("LV_ADMIN_PASSWORD", "Omoda@123")
 DEFAULT_ADMIN_FULL_NAME = os.getenv("LV_ADMIN_FULL_NAME", "System Administrator")

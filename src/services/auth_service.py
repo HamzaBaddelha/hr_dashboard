@@ -18,10 +18,25 @@ def ensure_default_admin() -> None:
             "SELECT id FROM users WHERE role = 'admin' LIMIT 1"
         ).fetchone()
 
+        password_hash = hash_password(DEFAULT_ADMIN_PASSWORD)
+
         if existing_admin:
+            conn.execute(
+                """
+                UPDATE users
+                SET full_name = ?, username = ?, password_hash = ?, is_approved = 1, is_active = 1
+                WHERE id = ?
+                """,
+                (
+                    DEFAULT_ADMIN_FULL_NAME,
+                    DEFAULT_ADMIN_USERNAME.strip().lower(),
+                    password_hash,
+                    int(existing_admin["id"]),
+                ),
+            )
+            conn.commit()
             return
 
-        password_hash = hash_password(DEFAULT_ADMIN_PASSWORD)
         conn.execute(
             """
             INSERT INTO users (full_name, username, password_hash, password_salt, role, is_approved, is_active)
